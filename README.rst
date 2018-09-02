@@ -5,9 +5,7 @@ Twitter's API is annoying to work with, and has lots of limitations —
 luckily their frontend (JavaScript) has it's own API, which I reverse–engineered.
 No API rate limits. No restrictions. Extremely fast.
 
-You can use this library to get the text of any user's Tweets trivially.
-
-Very useful for making markov chains.
+You can use this library to get the text of any users' Tweets trivially.
 
 Usage
 =====
@@ -16,7 +14,7 @@ Usage
 
     >>> from twitter_scraper import get_tweets
 
-    >>> for tweet in get_tweets('kennethreitz', pages=1):
+    >>> for tweet in get_tweets(['kennethreitz'], pages=1):
     >>>     print(tweet['text'])
     P.S. your API is a user interface
     s3monkey just hit 100 github stars! Thanks, y’all!
@@ -38,7 +36,7 @@ First, install markovify:
 
     >>> import markovify
 
-    >>> tweets = '\n'.join([t['text'] for t in get_tweets('kennethreitz', pages=25)])
+    >>> tweets = '\n'.join([t['text'] for t in get_tweets(['kennethreitz'], pages=25)])
     >>> text_model = markovify.Text(tweets)
 
     >>> print(text_model.make_short_sentence(140))

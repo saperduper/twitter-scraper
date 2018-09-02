@@ -5,17 +5,17 @@ from datetime import datetime
 session = HTMLSession()
 
 
-def get_tweets(user, pages=25):
-    """Gets tweets for a given user, via the Twitter frontend API."""
+def get_tweets(users, pages=25):
+    """Gets tweets for the given user(s), via the Twitter frontend API."""
 
-    url = f'https://twitter.com/i/profiles/show/{user}/timeline/tweets?include_available_features=1&include_entities=1&include_new_items_bar=true'
+    url = 'https://twitter.com/i/search/timeline?f=tweets&q=from:{}'.format(', OR from:'.join(users))
     headers = {
         'Accept': 'application/json, text/javascript, */*; q=0.01',
-        'Referer': f'https://twitter.com/{user}',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8',
         'X-Twitter-Active-User': 'yes',
         'X-Requested-With': 'XMLHttpRequest'
     }
+
 
     def gen_tweets(pages):
         r = session.get(url, headers=headers)
@@ -32,6 +32,11 @@ def get_tweets(user, pages=25):
             dot = "."
             tweets = []
             for tweet in html.find('.stream-item'):
+                is_reply = tweet.find('.ReplyingToContextBelowAuthor')
+                if is_reply:
+                    continue
+
+                author = tweet.find('.username')[0].full_text
                 text = tweet.find('.tweet-text')[0].full_text
                 tweetId = tweet.find(
                     '.js-permalink')[0].attrs['data-conversation-id']
@@ -56,7 +61,8 @@ def get_tweets(user, pages=25):
                             tmp = style.split('/')[-1]
                             video_id = tmp[:tmp.index('.jpg')]
                             videos.append({'id': video_id})
-                tweets.append({'tweetId': tweetId, 'time': time, 'text': text,
+                tweets.append({'author': author,
+                               'tweetId': tweetId, 'time': time, 'text': text,
                                'replies': replies, 'retweets': retweets, 'likes': likes, 
                                'entries': {
                                     'hashtags': hashtags, 'urls': urls,
@@ -72,7 +78,7 @@ def get_tweets(user, pages=25):
                     yield tweet
 
             r = session.get(
-                url, params = {'max_position': last_tweet}, headers = headers)
+                url, params = {'max_position': 'TWEET-{}-{}'.format(last_tweet, last_tweet)}, headers = headers)
             pages += -1
 
     yield from gen_tweets(pages)
